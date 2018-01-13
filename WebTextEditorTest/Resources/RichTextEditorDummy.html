@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<script src="codemirror.js"></script>
+<link rel="stylesheet" href="codemirror.css">
+    <link rel="stylesheet" href="dracula.css">
+    <script src="swift.js"></script>
+<html>
+    <head>
+        <meta name="viewport" content="initial-scale=1.0" />
+    </head>
+    <body>
+    </body>
+</html>
+
+<script>
+    var myCodeMirror = CodeMirror(document.body, {
+                                  value: codeString,
+                                  mode: "swift",
+                                  theme: "dracula",
+                                  lineNumbers: true
+                                  });
+                                  
+                                  myCodeMirror.on("change", function() {
+                                                  window.webkit.messageHandlers.heightDidChange.postMessage(document.body.offsetHeight);
+                                                  });
+</script>
