@@ -68,6 +68,11 @@ class ViewController: UIViewController, UIScrollViewDelegate {
         codeEditorView.loadHTMLString(html, baseURL: Bundle.main.bundleURL)
     }
     
+    func funkyMethod() {
+        let testField = UITextField()
+        testField.undoManager
+    }
+    
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return nil
     }
@@ -113,8 +118,8 @@ extension WKWebView {
     }
     
     private func classWithCustomAccessoryView(_ targetView: UIView) -> AnyClass? {
-        guard let targetSuperClass = targetView.superclass else { return nil }
-        let customInputAccessoryViewClassName = "\(targetSuperClass)_CustomInputAccessoryView"
+        //guard let targetSuperClass = targetView.superclass else { return nil }
+        let customInputAccessoryViewClassName = "\(type(of: targetView))_Custom"
         
         var newClass: AnyClass? = NSClassFromString(customInputAccessoryViewClassName)
         if newClass == nil {
@@ -123,21 +128,41 @@ extension WKWebView {
         else {
             return newClass
         }
-        
-        let newMethod = class_getInstanceMethod(WKWebView.self, #selector(WKWebView.getCustomInputAccessoryView))
-        class_addMethod(newClass.self, Selector("inputAccessoryView"), method_getImplementation(newMethod!), method_getTypeEncoding(newMethod!))
+
+        let newUndoManager = class_getInstanceMethod(WKWebView.self, #selector(WKWebView.getCustomUndoManager))
+        class_addMethod(newClass.self, Selector("undoManager"), method_getImplementation(newUndoManager!), method_getTypeEncoding(newUndoManager!))
         objc_registerClassPair(newClass!)
         
         return newClass
     }
     
-    @objc func getCustomInputAccessoryView() -> UIView? {
+    @objc func getCustomUndoManager() -> UndoManager {
+        
         var superWebView: UIView? = self
         while (superWebView != nil) && !(superWebView is WKWebView) {
             superWebView = superWebView?.superview
         }
-        let customInputAccessory = objc_getAssociatedObject(superWebView, &ToolbarHandle)
-        return customInputAccessory as? UIView
+        
+        let undoManager = UndoManager()
+        undoManager.beginUndoGrouping()
+        undoManager.registerUndo(withTarget: superWebView!, selector: #selector(WKWebView.undo(_:)), object: undoManager)
+        undoManager.setActionName("redo")
+        undoManager.endUndoGrouping()
+        undoManager.beginUndoGrouping()
+        undoManager.registerUndo(withTarget: superWebView!, selector: #selector(WKWebView.undo(_:)), object: undoManager)
+        undoManager.setActionName("undy")
+        undoManager.endUndoGrouping()
+
+        
+        undoManager.undoNestedGroup()
+        
+        return undoManager
     }
+    
+    @objc func undo(_ undoManager: UndoManager) {
+        print("hello")
+        undoManager.registerUndo(withTarget: self, selector: #selector(WKWebView.undo(_:)), object: undoManager)
+    }
+    
 }
 
