@@ -143,25 +143,39 @@ extension WKWebView {
             superWebView = superWebView?.superview
         }
         
-        let undoManager = UndoManager()
-        undoManager.beginUndoGrouping()
-        undoManager.registerUndo(withTarget: superWebView!, selector: #selector(WKWebView.undo(_:)), object: undoManager)
-        undoManager.setActionName("redo")
-        undoManager.endUndoGrouping()
-        undoManager.beginUndoGrouping()
-        undoManager.registerUndo(withTarget: superWebView!, selector: #selector(WKWebView.undo(_:)), object: undoManager)
-        undoManager.setActionName("undy")
-        undoManager.endUndoGrouping()
-
+        let superWKWebView = superWebView as! WKWebView
         
-        undoManager.undoNestedGroup()
+        let undoManager = WebUndoManager()
+        
+        undoManager.undoAction = { superWKWebView.evaluateJavaScript("myCodeMirror.execCommand(\"undo\")") }
+        undoManager.redoAction = { superWKWebView.evaluateJavaScript("myCodeMirror.execCommand(\"redo\")") }
         
         return undoManager
     }
     
-    @objc func undo(_ undoManager: UndoManager) {
-        print("hello")
-        undoManager.registerUndo(withTarget: self, selector: #selector(WKWebView.undo(_:)), object: undoManager)
+}
+
+class WebUndoManager: UndoManager {
+    
+    var undoAction: (() -> Void)?
+    var redoAction: (() -> Void)?
+    
+    override var canUndo: Bool {
+        return true
+    }
+    
+    override var canRedo: Bool {
+        return true
+    }
+    
+    override func undo() {
+        undoAction?()
+        super.undo()
+    }
+    
+    override func redo() {
+        redoAction?()
+        super.redo()
     }
     
 }
