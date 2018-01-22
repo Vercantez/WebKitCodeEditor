@@ -43,11 +43,8 @@ class ViewController: UIViewController, UIScrollViewDelegate {
         configuration.userContentController.addUserScript(codeStringScript)
         configuration.userContentController.addUserScript(script)
         
-        let toolbarView = UIView(frame: CGRect(x: 0, y: 0, width: 200, height: 20))
-        toolbarView.backgroundColor = .green
-        
         codeEditorView = WKWebView(frame: .zero, configuration: configuration)
-        codeEditorView.addRichEditorInputAccessoryView(toolbar: toolbarView)
+        codeEditorView.addCustomUndoManager()
         codeEditorView.frame = view.frame
         codeEditorView.backgroundColor = .clear
         
@@ -66,11 +63,6 @@ class ViewController: UIViewController, UIScrollViewDelegate {
 
         view.addSubview(codeEditorView)
         codeEditorView.loadHTMLString(html, baseURL: Bundle.main.bundleURL)
-    }
-    
-    func funkyMethod() {
-        let testField = UITextField()
-        testField.undoManager
     }
     
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
@@ -102,9 +94,7 @@ fileprivate var ToolbarHandle: UInt8 = 0
 
 extension WKWebView {
     
-    func addRichEditorInputAccessoryView(toolbar: UIView?) {
-        guard let toolbar = toolbar else { return }
-        objc_setAssociatedObject(self, &ToolbarHandle, toolbar, objc_AssociationPolicy.OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+    func addCustomUndoManager() {
         
         var candidateView: UIView? = nil
         for view in self.scrollView.subviews {
@@ -118,7 +108,6 @@ extension WKWebView {
     }
     
     private func classWithCustomAccessoryView(_ targetView: UIView) -> AnyClass? {
-        //guard let targetSuperClass = targetView.superclass else { return nil }
         let customInputAccessoryViewClassName = "\(type(of: targetView))_Custom"
         
         var newClass: AnyClass? = NSClassFromString(customInputAccessoryViewClassName)
